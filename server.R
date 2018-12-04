@@ -7,6 +7,8 @@ library(RCurl)
 library(png)
 library(knitr)
 library(ggthemes)
+library(factoextra)
+library(class)
 library(tree)
 
 
@@ -293,6 +295,58 @@ getKNNFit<-reactive({
     PCA<-getPCA()
     fviz_screeplot(PCA, addlabels = TRUE, ylim = c(0, 50))
   })
+  
+#Clustering
+  #define data
+  subDataCluster<-select(pogo,Attack,Defense,Stamina,CP,DPS,Legendary)
+  subDataCluster$CP<-as.numeric(subDataCluster$CP)
+  subDataCluster$Legendary<-as.numeric(subDataCluster$Legendary)
+  
+  #Get cluster method input
+  getClustMeth<-reactive({
+    switch(input$clusterMethod,
+           "Average"="average",
+           "Complete"="complete",
+           "Median"="median",
+           "Single"="single",
+           "Centroid"="centroid")
+  })
+  
+  #Get number of clusters
+  getNumClust<-reactive({
+    numClust<-input$numClust
+  })
+  
+  #Fit hierarchical cluster model
+  getClusterMod<-reactive({
+  numClust<-getNumClust()
+  clustMethod<-getClustMeth()
+  hierClust<-hclust(dist(subDataCluster),method=clustMethod)
+  plot(hierClust,xlab="")
+  pruneClust<-cutree(hierClust,k=numClust)
+  newSubDataCluster<-cbind.data.frame(subDataCluster,cluster=as.factor(pruneClust))
+  })
+  
+#Cluster Text
+  output$clusterText<-renderText({
+    k<-getNumClust()
+    paste0("K = ",k," Clusters")
+  })
+  
+  #cluster plot
+  output$clusterPlot<-renderPlot({
+  clusterModel<-getClusterMod()
+  clustMethod<-getClustMeth()
+  hc<-ggplot(data=clusterModel,aes(x=Attack,y=Defense, color=cluster))
+  hc+geom_point()
+  })
+  
+  #cluster comp plot
+  output$compPlot<-renderPlot({
+    cp<-ggplot(data=pogo,aes(x=Attack,y=Defense,color=Type1))
+    cp+geom_point()
+  })
+  
 
 #Download Data
   datasetInput <- reactive({

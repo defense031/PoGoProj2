@@ -6,6 +6,8 @@ library(knitr)
 library(shinythemes)
 library(shinydashboard)
 library(RCurl)
+library(factoextra)
+library(class)
 library(shinydashboardPlus)
 
 url2<-"https://raw.githubusercontent.com/defense031/ST590_Proj2_PoGo/master/PoGoIndividualData.csv"
@@ -37,7 +39,8 @@ shinyUI(dashboardPagePlus(skin="blue",
                menuSubItem('KNN', tabName="knn")
                ),
       menuItem("Unsupervised Learning", tabName="unsupLearn",icon=icon("eye-slash"),
-               menuSubItem('PCA',tabName='pca',selected=TRUE)
+               menuSubItem('PCA',tabName='pca',selected=TRUE),
+               menuSubItem("Hierarchical Clustering", tabName="cluster")
                ),
                
       menuItem("Data", tabName = "data",icon = icon("th"))
@@ -196,6 +199,27 @@ shinyUI(dashboardPagePlus(skin="blue",
                                               choices=c("Attack","Defense","Stamina","DPS","CP","Legendary"),inline=TRUE,
                                               selected=c("Attack","Defense","Stamina","DPS","CP","Legendary")))
           ),
+          
+          tabItem(tabName="cluster",
+                  fluidRow(h3(uiOutput("clusterText"))),
+                  fluidRow(
+                    column(6,plotOutput("clusterPlot")),
+                    column(6,plotOutput("compPlot"))),
+                  fluidRow(column(4,
+                      selectInput(inputId="clusterMethod",label="Select type of clustering Method",
+                                  choices=c("Average","Complete","Median","Single","Centroid"),
+                                  selected="Average")),
+                      column(4,
+                             sliderInput(inputId="numClust",label="",
+                                  min=1,
+                                  max=17,
+                                  value=5))),
+                  fluidRow("Here we use hierarchical clustering to compare the true plot of Attack vs. Defense on Pokemon 
+                           Type to the clusters that the model produces.  
+                           This is unsupervised, so we aren't checking to see 
+                           if the responses are the same, but it makes for an interesting comparison nonetheless.  
+                           We definitely see some similar separations!")
+                  ),
           
           tabItem(tabName="data",
               uiOutput("topMon"),
